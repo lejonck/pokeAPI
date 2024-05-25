@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeAPI</title>
+</head>
+
+<body>
+    <h1>Pesquisar Pokémon</h1>
+    <p>Insira o nome do Pokémon buscado (em inglês, apenas letras minúsculas)</p>
+    <!-- Esse input é a caixa de texto onde vamos receber o nome do pokemon-->
+    <input type="text" id="pokemon-nome">
+    <!-- Botão que chama a função do JavaScript "pesquisarPokemon" quando é clicado-->
+    <button onclick="pesquisarPokemon()">Buscar</button>
+    <div id="pokemon-info">
+        <!-- Espaço onde ficarão as informações buscadas do Pokémon -->
+    </div>
+
+    <script>
+        /*Usamos uma função assíncrona para fazer a busca do pokemon, já que vamos fazer uma requisição http com fetch,
+        e vamos precisar esperar o resultado dessa busca antes de seguir no código. Dessa forma, com na função assícrona podemos
+        usar o await, que pausa a execução até que seja retornado o resultado da busca*/
+        async function pesquisarPokemon() {
+            //Vamos pegar o conteúdo do input do HTML, ou seja, o nome digitado, e salvamos na const 'pokemonNome'
+            const pokemonNome = document.getElementById('pokemon-nome').value;
+            //Montamos a url do site, colocando o 'pokemonNome' no final
+             const url = `http://localhost:3000/pokemon/${pokemonNome}`;
+
+
+            /*usaremos try e catch, pois caso haja algum erro durante a execução do bloco try, ele para e  
+            passa para o catch, já informando do erro*/
+            try {
+                /*usamos a função fetch para fazer uma requisição http para o servidor express no arquivo 'App.js',
+                passando a url com o nome do pokemon, e salvamos na const 'resposta'
+                Usamos o await para indicar que é preciso esperar o retorno do fetch(busca), para continuar o código*/
+                const resposta = await fetch(url);
+                /*convertemos a const 'resposta' em formato json (formato padronizado de dados para comunicação 
+                entre servidor e cliente), para extrair os dados
+                Também usamos o await para esperar que a resposta seja convertida, para então salvar em pokemonDados e continuar*/
+                const pokemonDados = await resposta.json();
+
+                //A resposta da requisição tem um atributo 'ok', que retorna se a requisição foi bem sucedida ou não
+                //Se não foi bem-sucedida, no caso o nome digitado não corresponde a um pokemon, mandamos um erro
+                if (!resposta.ok) {
+                    throw new Error('Pokémon não encontrado');
+                }
+
+                //Se deu tudo certo e conseguimos pegar os dados do pokemon, chamamos a função de mostrar os dados do pokemon no HTML
+                mostrarInfoPokemon(pokemonDados);
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function mostrarInfoPokemon(pokemonDados) {
+            //Nessa const, pegamos a div que separamos para exibir os dados do pokemon
+            const pokemonInfoContainer = document.getElementById('pokemon-info');
+            //Como alguns pokemons tem mais que um tipo, criamos uma string com os tipos separados por ','
+            let tiposPokemon = '';
+            //pokemonDados.tipos é um vetor dos tipos do pokemon. Usamos o índice para ver se é o último, e não colocar vírgula no fim
+            pokemonDados.tipos.forEach(function (type, index) {
+                //Arescentamos cada elemento na string
+                tiposPokemon += type.type.name;
+                //Se não é o último elemento, acrescenta vírgula
+                if (index < pokemonDados.tipos.length - 1) {
+                    tiposPokemon += ', ';
+                }
+            });
+            //Pegamos o nome e a imagem do objeto pokemonDados, e a string tiposPokemon e inserimos na div reservada no HTML
+            pokemonInfoContainer.innerHTML = `
+                <h2>${pokemonDados.nome}</h2>
+                <p>Tipos: ${tiposPokemon}</p> 
+                <img src="${pokemonDados.imagem}" alt="${pokemonDados.nome}">
+            `;
+        }
+    </script>
+</body>
+
+</html>
