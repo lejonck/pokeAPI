@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeAPI</title>
+    <title>Pokedex</title>
 </head>
 
 <body>
-    <h1>Pesquisar Pokémon</h1>
+    <h1>Pokedex</h1>
     <p>Insira o nome do Pokémon buscado (em inglês, apenas letras minúsculas)</p>
     <!-- Esse input é a caixa de texto onde vamos receber o nome do pokemon-->
     <input type="text" id="pokemon-nome">
@@ -25,27 +25,30 @@
         async function pesquisarPokemon() {
             //Vamos pegar o conteúdo do input do HTML, ou seja, o nome digitado, e salvamos na const 'pokemonNome'
             const pokemonNome = document.getElementById('pokemon-nome').value;
-            //Montamos a url do site, colocando o 'pokemonNome' no final
-             const url = `http://localhost:3000/pokemon/${pokemonNome}`;
+            //Buscamos no endereço da pokeapi, colocando o 'pokemonNome' no final para buscar o endereço específico
+             const url = `https://pokeapi.co/api/v2/pokemon/${pokemonNome}`;
 
 
             /*usaremos try e catch, pois caso haja algum erro durante a execução do bloco try, ele para e  
             passa para o catch, já informando do erro*/
             try {
-                /*usamos a função fetch para fazer uma requisição http para o servidor express no arquivo 'App.js',
-                passando a url com o nome do pokemon, e salvamos na const 'resposta'
+                /*usamos a função fetch para fazer uma requisição http para o url que definimos acima, do pokeapi,
+                e salvamos na const 'resposta' o resultado
                 Usamos o await para indicar que é preciso esperar o retorno do fetch(busca), para continuar o código*/
                 const resposta = await fetch(url);
-                /*convertemos a const 'resposta' em formato json (formato padronizado de dados para comunicação 
-                entre servidor e cliente), para extrair os dados
-                Também usamos o await para esperar que a resposta seja convertida, para então salvar em pokemonDados e continuar*/
-                const pokemonDados = await resposta.json();
+                
 
                 //A resposta da requisição tem um atributo 'ok', que retorna se a requisição foi bem sucedida ou não
                 //Se não foi bem-sucedida, no caso o nome digitado não corresponde a um pokemon, mandamos um erro
                 if (!resposta.ok) {
                     throw new Error('Pokémon não encontrado');
                 }
+
+                /*convertemos a const 'resposta' em formato json (formato padronizado de dados para comunicação 
+                entre servidor e cliente), para extrair os dados
+                Também usamos o await para esperar que a resposta seja convertida, para então salvar em pokemonDados e continuar
+                O pokeapi fornece vários recursos (informações) do pokemon*/
+                const pokemonDados = await resposta.json();
 
                 //Se deu tudo certo e conseguimos pegar os dados do pokemon, chamamos a função de mostrar os dados do pokemon no HTML
                 mostrarInfoPokemon(pokemonDados);
@@ -61,19 +64,25 @@
             //Como alguns pokemons tem mais que um tipo, criamos uma string com os tipos separados por ','
             let tiposPokemon = '';
             //pokemonDados.tipos é um vetor dos tipos do pokemon. Usamos o índice para ver se é o último, e não colocar vírgula no fim
-            pokemonDados.tipos.forEach(function (type, index) {
+            pokemonDados.types.forEach(function (type, index) {
                 //Arescentamos cada elemento na string
                 tiposPokemon += type.type.name;
                 //Se não é o último elemento, acrescenta vírgula
-                if (index < pokemonDados.tipos.length - 1) {
+                if (index < pokemonDados.types.length - 1) {
                     tiposPokemon += ', ';
                 }
             });
-            //Pegamos o nome e a imagem do objeto pokemonDados, e a string tiposPokemon e inserimos na div reservada no HTML
+            const imagem = pokemonDados.sprites.front_default
+            /*Acessamos os recursos do pokemon, que estao salvos em 'pokemonDados', usando o nome que é dado no pokeapi, aqui
+            vamos pegar o name, id, height, weight, e types (salvos no vetor tiposPokemon) 
+            Exibimos os dados buscados na div 'pokemon-info' que reservamos*/
             pokemonInfoContainer.innerHTML = `
-                <h2>${pokemonDados.nome}</h2>
-                <p>Tipos: ${tiposPokemon}</p> 
-                <img src="${pokemonDados.imagem}" alt="${pokemonDados.nome}">
+                <h2>${pokemonDados.name}</h2>
+                <p>Número: ${pokemonDados.id}</p>
+                <p>Altura: ${(pokemonDados.height)/10} m</p> 
+                <p>Peso: ${(pokemonDados.weight)/10} kg</p>
+                <p>Tipos: ${tiposPokemon}</p>
+                <img src="${imagem}" alt="${pokemonDados.name}">
             `;
         }
     </script>
